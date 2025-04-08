@@ -51,9 +51,12 @@ async def start(update: Update, context: CallbackContext):
 
         # Save the timestamp of when the first message was sent
         message_times[update.message.chat_id] = {
-            "first_message_time": time.time(),
             "messages": [first_message.message_id],
             "user_messages": [update.message.message_id],  # Store the user's first message ID
+            "timestamps": {
+                first_message.message_id: time.time(),
+                update.message.message_id: time.time()
+            }
         }
 
         # Wait 20 seconds before sending the second message
@@ -62,6 +65,7 @@ async def start(update: Update, context: CallbackContext):
         # Send the second message
         second_message = await update.message.reply_text(SECOND_MESSAGE)
         message_times[update.message.chat_id]["messages"].append(second_message.message_id)
+        message_times[update.message.chat_id]["timestamps"][second_message.message_id] = time.time()
 
         # Wait another 20 seconds before sending the last message
         await asyncio.sleep(20)
@@ -69,33 +73,39 @@ async def start(update: Update, context: CallbackContext):
         # Send the last message (reward link)
         last_message = await update.message.reply_text(LAST_MESSAGE)
         message_times[update.message.chat_id]["messages"].append(last_message.message_id)
+        message_times[update.message.chat_id]["timestamps"][last_message.message_id] = time.time()
 
     except Exception as e:
         handle_error(e, "Error occurred in start function")
 
-# Function to delete messages after 30 seconds
+# Function to delete messages after 20 seconds
 async def delete_old_messages():
     while True:
         current_time = time.time()
         for chat_id, data in message_times.items():
-            first_message_time = data["first_message_time"]
-            if current_time - first_message_time >= 30:  # 30 seconds after the first message
-                try:
-                    # Delete the user's messages
-                    for user_message_id in data["user_messages"]:
-                        await app.bot.delete_message(chat_id, user_message_id)
-                        print(f"Deleted user's message {user_message_id} for chat_id {chat_id}")
+            # Check each message's timestamp individually
+            for message_id, timestamp in data["timestamps"].items():
+                if current_time - timestamp >= 20:  # 20 seconds after the message is sent
+                    try:
+                        # Delete the user's message
+                        if message_id in data["user_messages"]:
+                            await app.bot.delete_message(chat_id, message_id)
+                            print(f"Deleted user's message {message_id} for chat_id {chat_id}")
 
-                    # Delete all messages sent by the bot
-                    for message_id in data["messages"]:
-                        await app.bot.delete_message(chat_id, message_id)
-                        print(f"Deleted bot's message {message_id} for chat_id {chat_id}")
+                        # Delete the bot's message
+                        elif message_id in data["messages"]:
+                            await app.bot.delete_message(chat_id, message_id)
+                            print(f"Deleted bot's message {message_id} for chat_id {chat_id}")
 
-                    # Remove the entry for this user after deleting messages
-                    del message_times[chat_id]
+                        # Remove the message from the tracking list
+                        del data["timestamps"][message_id]
+                    
+                    except Exception as e:
+                        handle_error(e, f"Failed to delete message {message_id} for chat_id {chat_id}")
 
-                except Exception as e:
-                    handle_error(e, f"Failed to delete messages for chat_id {chat_id}")
+            # Clean up once all messages are deleted
+            if not data["timestamps"]:
+                del message_times[chat_id]
 
         # Check every 5 seconds
         await asyncio.sleep(5)
