@@ -52,7 +52,8 @@ async def start(update: Update, context: CallbackContext):
         # Save the timestamp of when the first message was sent
         message_times[update.message.chat_id] = {
             "first_message_time": time.time(),
-            "messages": [first_message.message_id]
+            "messages": [first_message.message_id],
+            "user_messages": [update.message.message_id],  # Store the user's first message ID
         }
 
         # Wait 5 seconds before sending the second message
@@ -80,10 +81,15 @@ async def delete_old_messages():
             first_message_time = data["first_message_time"]
             if current_time - first_message_time >= 35:  # 35 seconds after the first message
                 try:
-                    # Delete all messages associated with this user
+                    # Delete the user's messages
+                    for user_message_id in data["user_messages"]:
+                        await app.bot.delete_message(chat_id, user_message_id)
+                        print(f"Deleted user's message {user_message_id} for chat_id {chat_id}")
+
+                    # Delete all messages sent by the bot
                     for message_id in data["messages"]:
                         await app.bot.delete_message(chat_id, message_id)
-                        print(f"Deleted message {message_id} for chat_id {chat_id}")
+                        print(f"Deleted bot's message {message_id} for chat_id {chat_id}")
 
                     # Remove the entry for this user after deleting messages
                     del message_times[chat_id]
