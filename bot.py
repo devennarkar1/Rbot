@@ -3,7 +3,6 @@ import os
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
 import asyncio
-import nest_asyncio  # This is the solution to the event loop issue
 import time
 
 # Load environment variables from .env file
@@ -129,7 +128,6 @@ async def main():
 # This part will be executed when the script is run
 if __name__ == "__main__":
     try:
-        nest_asyncio.apply()  # Apply nest_asyncio to allow nested event loops
         asyncio.run(main())  # Properly run the async main function
     except Exception as e:
         handle_error(e, "Error occurred while running the bot")
