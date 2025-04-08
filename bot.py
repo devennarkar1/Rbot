@@ -77,6 +77,8 @@ async def start(update: Update, context: CallbackContext):
 async def delete_old_messages():
     while True:
         current_time = time.time()
+
+        # Iterate over all tracked messages
         for chat_id, data in message_times.items():
             first_message_time = data["first_message_time"]
             if current_time - first_message_time >= 35:  # 35 seconds after the first message
