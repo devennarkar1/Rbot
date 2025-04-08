@@ -49,31 +49,31 @@ async def start(update: Update, context: CallbackContext):
         message_times[update.message.chat_id]["user_start_message_id"] = user_start_message_id
 
         # Wait for 5 seconds
-        await asyncio.sleep(5)  
+        await asyncio.sleep(2)  
 
         # Send the second message after 5 seconds (reminder to hang tight)
         message = await update.message.reply_text("⏳ Click the link To Get Link")
 
         # Wait for 5 seconds
-        await asyncio.sleep(5)  
+        await asyncio.sleep(2)  
 
         # Send the second message after 5 seconds (reminder to hang tight)
         message = await update.message.reply_text("⏳ Click the link To Get Link")
 
         # Wait for 5 seconds
-        await asyncio.sleep(40)  
+        await asyncio.sleep(4)  
 
         # Send the second message after 5 seconds (reminder to hang tight)
         message = await update.message.reply_text("⏳ 40 sec Left ")
         
         # Wait for 5 seconds
-        await asyncio.sleep(20)  
+        await asyncio.sleep(2)  
 
         # Send the second message after 5 seconds (reminder to hang tight)
         message = await update.message.reply_text("⏳ 20 sec Left ")
 
         # Wait for 5 seconds
-        await asyncio.sleep(10)  
+        await asyncio.sleep(1)  
 
         # Send the second message after 5 seconds (reminder to hang tight)
         message = await update.message.reply_text("⏳ 10 sec Left ")
@@ -82,7 +82,7 @@ async def start(update: Update, context: CallbackContext):
         message_times[update.message.chat_id]["messages"].append(message.message_id)
 
         # Wait for 85 more seconds (total 90 seconds)
-        await asyncio.sleep(10)  
+        await asyncio.sleep(3)  
 
         # Send the third message after 90 seconds (the reward link)
         message = await update.message.reply_text(SECOND_MESSAGE)
@@ -93,13 +93,13 @@ async def start(update: Update, context: CallbackContext):
     except Exception as e:
         print(f"Error occurred: {e}")
 
-# Function to delete messages after 100 seconds
+# Function to delete messages after 110 seconds
 async def delete_old_messages():
     while True:
         current_time = time.time()
         for chat_id, data in message_times.items():
             first_message_time = data["first_message_time"]
-            if current_time - first_message_time >= 43000:  # 100 seconds
+            if current_time - first_message_time >= 29:  # 110 seconds
                 # Delete the user's initial /start message
                 user_start_message_id = data.get("user_start_message_id")
                 if user_start_message_id:
