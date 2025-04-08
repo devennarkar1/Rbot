@@ -15,111 +15,84 @@ TOKEN = os.getenv("TOKEN")
 if not TOKEN:
     raise ValueError("No TOKEN found in .env file")
 
-SECOND_MESSAGE = (
+# Define messages to be sent
+FIRST_MESSAGE = (
+    "🚨 **Want the link?**\n\n\n\n"
+    "🎥 Just watch the video for *90 seconds* ⏱️ And hit the SUBSCRIBE Button 🔔.\n\n\n\n"
+    "👇👇👇\n"
+    "👉 [Watch here!](https://youtu.be/oeenz5JTaoo) 😎\n\n\n"
+    "After that, You Will Get LINK!"
+)
+
+SECOND_MESSAGE = "⏳ Click the link to get the link!"
+LAST_MESSAGE = (
     "🎯 Ready for the reward?\n"
     "🎁 Here’s your exclusive link:\n\n\n"
     "👉 https://t.me/+z0oxXjImMvg1NmNl\n\n\n"
     "😎 Enjoy!"
-)  # New second message with the link
+)
 
 # Dictionary to track messages by user
 message_times = {}
+
+# Function to handle errors
+def handle_error(exception, message="An error occurred"):
+    print(f"{message}: {exception}")
+    # You can also log this to a file if needed
 
 # This function will send the first, second, and third messages
 async def start(update: Update, context: CallbackContext):
     try:
         # Send the first message with the link clearly visible
-        message = await update.message.reply_text(
-            "🚨 **Want the link?**\n\n\n\n"
-            "🎥 Just watch the video for *90 seconds* ⏱️ And hit  SUBSCRIBE Button 🔔.\n\n\n\n"
-            "👇👇👇\n"
-            "👉 [Watch here!](https://youtu.be/oeenz5JTaoo) 😎\n\n\n"
-            "After that, You Will Get LINK!",
+        first_message = await update.message.reply_text(
+            FIRST_MESSAGE,
             disable_web_page_preview=True
         )
-        
+
         # Save the timestamp of when the first message was sent
         message_times[update.message.chat_id] = {
             "first_message_time": time.time(),
-            "messages": [message.message_id]
+            "messages": [first_message.message_id]
         }
 
-        # Store the user's initial /start message ID for deletion
-        user_start_message_id = update.message.message_id
-        message_times[update.message.chat_id]["user_start_message_id"] = user_start_message_id
+        # Wait 5 seconds before sending the second message
+        await asyncio.sleep(5)
 
-        # Wait for 5 seconds
-        await asyncio.sleep(2)
+        # Send the second message
+        second_message = await update.message.reply_text(SECOND_MESSAGE)
+        message_times[update.message.chat_id]["messages"].append(second_message.message_id)
 
-        # Send the second message after 5 seconds (reminder to hang tight)
-        message = await update.message.reply_text("⏳ Click the link To Get Link")
+        # Wait another 5 seconds before sending the last message
+        await asyncio.sleep(5)
 
-        # Wait for 5 seconds
-        await asyncio.sleep(2)
-
-        # Send the second message after 5 seconds (reminder to hang tight)
-        message = await update.message.reply_text("⏳ Click the link To Get Link")
-
-        # Wait for 5 seconds
-        await asyncio.sleep(4)
-
-        # Send the second message after 5 seconds (reminder to hang tight)
-        message = await update.message.reply_text("⏳ 40 sec Left ")
-
-        # Wait for 5 seconds
-        await asyncio.sleep(2)
-
-        # Send the second message after 5 seconds (reminder to hang tight)
-        message = await update.message.reply_text("⏳ 20 sec Left ")
-
-        # Wait for 5 seconds
-        await asyncio.sleep(1)
-
-        # Send the second message after 5 seconds (reminder to hang tight)
-        message = await update.message.reply_text("⏳ 10 sec Left ")
-
-        # Store the message ID for deletion later
-        message_times[update.message.chat_id]["messages"].append(message.message_id)
-
-        # Wait for 85 more seconds (total 90 seconds)
-        await asyncio.sleep(3)
-
-        # Send the third message after 90 seconds (the reward link)
-        message = await update.message.reply_text(SECOND_MESSAGE)
-
-        # Store the message ID for deletion later
-        message_times[update.message.chat_id]["messages"].append(message.message_id)
+        # Send the last message (reward link)
+        last_message = await update.message.reply_text(LAST_MESSAGE)
+        message_times[update.message.chat_id]["messages"].append(last_message.message_id)
 
     except Exception as e:
-        print(f"Error occurred in start: {e}")
+        handle_error(e, "Error occurred in start function")
 
-# Function to delete messages after 110 seconds
+# Function to delete messages after 35 seconds
 async def delete_old_messages():
     while True:
         current_time = time.time()
         for chat_id, data in message_times.items():
             first_message_time = data["first_message_time"]
-            if current_time - first_message_time >= 110:  # 110 seconds
+            if current_time - first_message_time >= 35:  # 35 seconds after the first message
                 try:
-                    # Delete the user's initial /start message
-                    user_start_message_id = data.get("user_start_message_id")
-                    if user_start_message_id:
-                        await app.bot.delete_message(chat_id, user_start_message_id)
-                        print(f"Deleted start message {user_start_message_id}")
-                
                     # Delete all messages associated with this user
                     for message_id in data["messages"]:
                         await app.bot.delete_message(chat_id, message_id)
-                        print(f"Deleted message {message_id}")
+                        print(f"Deleted message {message_id} for chat_id {chat_id}")
 
                     # Remove the entry for this user after deleting messages
                     del message_times[chat_id]
 
                 except Exception as e:
-                    print(f"Failed to delete messages for chat_id {chat_id}: {e}")
-
-        # Check every minute
-        await asyncio.sleep(60)
+                    handle_error(e, f"Failed to delete messages for chat_id {chat_id}")
+        
+        # Check every 5 seconds
+        await asyncio.sleep(5)
 
 async def main():
     try:
@@ -135,7 +108,7 @@ async def main():
         await app.run_polling()  # Start the polling to listen for updates
 
     except Exception as e:
-        print(f"Error occurred in main: {e}")
+        handle_error(e, "Error occurred in main function")
 
 # This part will be executed when the script is run
 if __name__ == "__main__":
@@ -143,4 +116,4 @@ if __name__ == "__main__":
         nest_asyncio.apply()  # Apply nest_asyncio to allow nested event loops
         asyncio.run(main())  # Properly run the async main function
     except Exception as e:
-        print(f"Error occurred while running the bot: {e}")
+        handle_error(e, "Error occurred while running the bot")
