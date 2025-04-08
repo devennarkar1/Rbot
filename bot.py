@@ -56,15 +56,15 @@ async def start(update: Update, context: CallbackContext):
             "user_messages": [update.message.message_id],  # Store the user's first message ID
         }
 
-        # Wait 5 seconds before sending the second message
-        await asyncio.sleep(5)
+        # Wait 20 seconds before sending the second message
+        await asyncio.sleep(20)
 
         # Send the second message
         second_message = await update.message.reply_text(SECOND_MESSAGE)
         message_times[update.message.chat_id]["messages"].append(second_message.message_id)
 
-        # Wait another 5 seconds before sending the last message
-        await asyncio.sleep(5)
+        # Wait another 20 seconds before sending the last message
+        await asyncio.sleep(20)
 
         # Send the last message (reward link)
         last_message = await update.message.reply_text(LAST_MESSAGE)
@@ -73,15 +73,13 @@ async def start(update: Update, context: CallbackContext):
     except Exception as e:
         handle_error(e, "Error occurred in start function")
 
-# Function to delete messages after 35 seconds
+# Function to delete messages after 30 seconds
 async def delete_old_messages():
     while True:
         current_time = time.time()
-
-        # Iterate over all tracked messages
         for chat_id, data in message_times.items():
             first_message_time = data["first_message_time"]
-            if current_time - first_message_time >= 35:  # 35 seconds after the first message
+            if current_time - first_message_time >= 30:  # 30 seconds after the first message
                 try:
                     # Delete the user's messages
                     for user_message_id in data["user_messages"]:
@@ -98,7 +96,7 @@ async def delete_old_messages():
 
                 except Exception as e:
                     handle_error(e, f"Failed to delete messages for chat_id {chat_id}")
-        
+
         # Check every 5 seconds
         await asyncio.sleep(5)
 
